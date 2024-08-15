@@ -128,11 +128,6 @@ public class CarControllerTest {
      */
     @Test
     public void deleteCar() throws Exception {
-        /**
-         * TODO: Add a test to check whether a vehicle is appropriately deleted
-         *   when the `delete` method is called from the Car Controller. This
-         *   should utilize the car from `getCar()` below.
-         */
         Long carId = 1L;
         mvc.perform(delete("/cars/" + carId))
                 .andExpect(status().isNoContent());
