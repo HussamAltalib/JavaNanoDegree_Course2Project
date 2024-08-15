@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,6 +19,7 @@ import com.udacity.vehicles.domain.Location;
 import com.udacity.vehicles.domain.car.Car;
 import com.udacity.vehicles.domain.car.Details;
 import com.udacity.vehicles.domain.manufacturer.Manufacturer;
+import com.udacity.vehicles.service.CarNotFoundException;
 import com.udacity.vehicles.service.CarService;
 import java.net.URI;
 import java.util.Collections;
@@ -33,6 +35,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+
+import javax.persistence.EntityNotFoundException;
 
 /**
  * Implements testing of the CarController class.
@@ -66,8 +70,12 @@ public class CarControllerTest {
         Car car = getCar();
         car.setId(1L);
         given(carService.save(any())).willReturn(car);
-        given(carService.findById(any())).willReturn(car);
+        given(carService.findById(1L)).willReturn(car);
         given(carService.list()).willReturn(Collections.singletonList(car));
+
+        // Simulate deletion by making findById return null or throw an exception after deletion
+        doNothing().when(carService).delete(1L);
+        given(carService.findById(1L)).willThrow(new CarNotFoundException("Car not found"));
     }
 
     /**
@@ -91,11 +99,14 @@ public class CarControllerTest {
      */
     @Test
     public void listCars() throws Exception {
-        /**
-         * TODO: Add a test to check that the `get` method works by calling
-         *   the whole list of vehicles. This should utilize the car from `getCar()`
-         *   below (the vehicle will be the first in the list).
-         */
+        mvc.perform(get(new URI("/cars"))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].details.model", is("Impala")))
+                .andExpect(jsonPath("$[0].details.manufacturer.name", is("Chevrolet")))
+                .andExpect(jsonPath("$[0].condition", is(Condition.USED.toString())));
 
     }
 
@@ -105,10 +116,10 @@ public class CarControllerTest {
      */
     @Test
     public void findCar() throws Exception {
-        /**
-         * TODO: Add a test to check that the `get` method works by calling
-         *   a vehicle by ID. This should utilize the car from `getCar()` below.
-         */
+        Long carId = 1L;
+        mvc.perform(get("/cars/" + carId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(carId.intValue())));
     }
 
     /**
@@ -122,6 +133,12 @@ public class CarControllerTest {
          *   when the `delete` method is called from the Car Controller. This
          *   should utilize the car from `getCar()` below.
          */
+        Long carId = 1L;
+        mvc.perform(delete("/cars/" + carId))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(get("/cars/" + carId))
+                .andExpect(status().isNotFound());
     }
 
     /**

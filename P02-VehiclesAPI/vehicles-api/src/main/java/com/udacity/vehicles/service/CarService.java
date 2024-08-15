@@ -45,10 +45,8 @@ public class CarService {
      */
     public Car findById(Long id) {
         Optional<Car> optionalCar = repository.findById(id);
-        System.out.println("OptionalCar: " + optionalCar);
 
         Car car;
-
         if (optionalCar.isPresent()) {
             car = optionalCar.get();
         } else {
@@ -86,13 +84,14 @@ public class CarService {
      * @param id the ID number of the car to delete
      */
     public void delete(Long id) {
-
+        System.out.println(findById(2L));
         Car car = findById(id);
         if(car == null){
             throw new CarNotFoundException();
         }
         else {
             repository.delete(car);
+            System.out.println(car);
         }
     }
 }

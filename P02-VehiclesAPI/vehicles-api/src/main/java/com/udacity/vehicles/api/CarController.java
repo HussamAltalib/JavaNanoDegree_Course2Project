@@ -8,6 +8,7 @@ import com.udacity.vehicles.domain.car.Car;
 import com.udacity.vehicles.service.CarService;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -44,11 +45,11 @@ class CarController {
      * @return list of vehicles
      */
     @GetMapping
-    Resources<Resource<Car>> list() {
+    Collection<Resource<Car>> list() {
         List<Resource<Car>> resources = carService.list().stream().map(assembler::toResource)
                 .collect(Collectors.toList());
         return new Resources<>(resources,
-                linkTo(methodOn(CarController.class).list()).withSelfRel());
+                linkTo(methodOn(CarController.class).list()).withSelfRel()).getContent();
     }
 
     /**
@@ -97,9 +98,6 @@ class CarController {
      */
     @DeleteMapping("/{id}")
     ResponseEntity<?> delete(@PathVariable Long id) {
-        /**
-         * TODO: Use the Car Service to delete the requested vehicle.
-         */
         carService.delete(id);
         return ResponseEntity.noContent().build();
     }
